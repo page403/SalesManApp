@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Alert, Animated } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { supabase } from '@/utils/supabase';
+import { Swipeable, TouchableOpacity } from 'react-native-gesture-handler';
 
 interface OrderDetail {
   id: number;
   totalValue: number;
   quantity: number;
+  unit: 'pcs' | 'ctn' | 'mid';
   created_at: string;
   products: {
     id: number;
@@ -49,6 +51,7 @@ export default function OrderDetail() {
           id,
           totalValue,
           quantity,
+          unit,
           created_at,
           products (
             id,
@@ -64,7 +67,7 @@ export default function OrderDetail() {
       // Merge orders with the same product ID
       const mergedOrders = orderData?.reduce((acc: OrderDetail[], current) => {
         const existingOrder = acc.find(
-          order => order.products.id === current.products.id
+          order => order.products.id === current.products.id && order.unit === current.unit
         );
 
         if (existingOrder) {
@@ -85,19 +88,67 @@ export default function OrderDetail() {
     }
   };
 
+  const deleteOrder = async (orderId: number) => {
+    try {
+      const { error } = await supabase
+        .from('order')
+        .delete()
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Remove the deleted order from state
+      setOrders(orders.filter(order => order.id !== orderId));
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      Alert.alert('Error', 'Failed to delete order');
+    }
+  };
+
+  const renderRightActions = (orderId: number) => {
+    return (
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => {
+          Alert.alert(
+            'Delete Order',
+            'Are you sure you want to delete this order?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Delete', 
+                onPress: () => deleteOrder(orderId),
+                style: 'destructive'
+              },
+            ]
+          );
+        }}
+      >
+        <Text style={styles.deleteButtonText}>Delete</Text>
+      </TouchableOpacity>
+    );
+  };
+
   const renderItem = ({ item }: { item: OrderDetail }) => (
-    <View style={styles.orderItem}>
-      <View style={styles.productInfo}>
-        <Text style={styles.productName}>{item.products.productName}</Text>
-        {/* <Text style={styles.orderTime}>
-          {new Date(item.created_at).toLocaleTimeString()}
-        </Text> */}
-        <Text style={styles.quantity}>Qty: {item.quantity}</Text>
+    <Swipeable
+      renderRightActions={() => renderRightActions(item.id)}
+      rightThreshold={40}
+    >
+      <View style={styles.orderItem}>
+        <View style={styles.productInfo}>
+          <Text style={styles.productName}>{item.products.productName}</Text>
+          {/* <Text style={styles.orderTime}>
+            {new Date(item.created_at).toLocaleTimeString()}
+          </Text> */}
+          <Text style={styles.quantity}>
+            Qty: {item.quantity} {item.unit}
+          </Text>
+        </View>
+        <Text style={styles.orderValue}>
+          Rp {item.totalValue.toLocaleString()}
+        </Text>
       </View>
-      <Text style={styles.orderValue}>
-        Rp {item.totalValue.toLocaleString()}
-      </Text>
-    </View>
+    </Swipeable>
   );
 
   if (loading) {
@@ -211,5 +262,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 2,
+  },
+  deleteButton: {
+    backgroundColor: '#ff4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    padding: 16,
   },
 }); 

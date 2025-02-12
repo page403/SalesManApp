@@ -24,6 +24,7 @@ interface OrderItem {
   productId: number;
   quantity: string;
   pricePerUnit: number;
+  unit: 'pcs' | 'ctn' | 'mid';
 }
 
 export default function Toko() {
@@ -64,13 +65,14 @@ export default function Toko() {
     fetchData();
   }, [id]);
 
-  const handleQuantityChange = (productId: number, quantity: string, pricePerUnit: number) => {
+  const handleQuantityChange = (productId: number, quantity: string, pricePerUnit: number, unit: 'pcs' | 'ctn' | 'mid') => {
     setOrderItems(prev => ({
       ...prev,
       [productId]: {
         productId,
         quantity,
-        pricePerUnit
+        pricePerUnit,
+        unit
       }
     }));
   };
@@ -99,7 +101,8 @@ export default function Toko() {
         totalValue: parseInt(item.quantity) * item.pricePerUnit,
         status: 'pending',
         products: item.productId,
-        quantity: parseInt(item.quantity)
+        quantity: parseInt(item.quantity),
+        unit: item.unit || 'ctn'
       }));
 
       // Insert all orders at once
@@ -140,7 +143,8 @@ export default function Toko() {
             style={styles.priceButton}
             onPress={() => handleQuantityChange(item.id, 
               orderItems[item.id]?.quantity || '', 
-              item.pricePerCarton
+              item.pricePerCarton,
+              'ctn'
             )}
           >
             <Text style={styles.productPrice}>Carton: Rp {item.pricePerCarton}</Text>
@@ -149,7 +153,8 @@ export default function Toko() {
             style={styles.priceButton}
             onPress={() => handleQuantityChange(item.id, 
               orderItems[item.id]?.quantity || '', 
-              item.pricePerMiddle
+              item.pricePerMiddle,
+              'mid'
             )}
           >
             <Text style={styles.productPrice}>Middle: Rp {item.pricePerMiddle}</Text>
@@ -158,7 +163,8 @@ export default function Toko() {
             style={styles.priceButton}
             onPress={() => handleQuantityChange(item.id, 
               orderItems[item.id]?.quantity || '', 
-              item.pricePerPcs
+              item.pricePerPcs,
+              'pcs'
             )}
           >
             <Text style={styles.productPrice}>Pcs: Rp {item.pricePerPcs}</Text>
@@ -174,7 +180,8 @@ export default function Toko() {
         onChangeText={(text) => handleQuantityChange(
           item.id,
           text,
-          orderItems[item.id]?.pricePerUnit || item.pricePerCarton
+          orderItems[item.id]?.pricePerUnit || item.pricePerCarton,
+          orderItems[item.id]?.unit || 'ctn'
         )}
       />
     </View>

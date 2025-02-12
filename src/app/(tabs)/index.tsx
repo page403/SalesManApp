@@ -4,6 +4,11 @@ import { supabase } from '@/utils/supabase'; // Adjust the import path
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+interface SummaryData {
+  totalValue: number;
+  percentageChange: number;
+}
+
 export default function Home() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +19,8 @@ export default function Home() {
     limitCredit: '2500000',
     jadwal: 'Senin'
   });
+  const [todayVsYesterday, setTodayVsYesterday] = useState<SummaryData>({ totalValue: 0, percentageChange: 0 });
+  const [todayVsMonthAvg, setTodayVsMonthAvg] = useState<SummaryData>({ totalValue: 0, percentageChange: 0 });
 
   const fetchCustomers = async () => {
     try {
@@ -30,8 +37,64 @@ export default function Home() {
     }
   };
 
+  const fetchSummaryData = async () => {
+    try {
+      // Get today's total
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const { data: todayData } = await supabase
+        .from('order')
+        .select('totalValue')
+        .gte('created_at', today.toISOString())
+        .lt('created_at', tomorrow.toISOString());
+
+      // Get yesterday's total
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const { data: yesterdayData } = await supabase
+        .from('order')
+        .select('totalValue')
+        .gte('created_at', yesterday.toISOString())
+        .lt('created_at', today.toISOString());
+
+      // Get month data
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const { data: monthData } = await supabase
+        .from('order')
+        .select('totalValue, created_at')
+        .gte('created_at', monthStart.toISOString())
+        .lt('created_at', tomorrow.toISOString());
+
+      const todayTotal = todayData?.reduce((sum, order) => sum + order.totalValue, 0) || 0;
+      const yesterdayTotal = yesterdayData?.reduce((sum, order) => sum + order.totalValue, 0) || 0;
+      
+      // Calculate month average excluding today
+      const monthOrders = monthData?.filter(order => new Date(order.created_at).getDate() !== today.getDate());
+      const monthDays = new Set(monthOrders?.map(order => new Date(order.created_at).getDate())).size;
+      const monthAverage = monthDays ? (monthOrders?.reduce((sum, order) => sum + order.totalValue, 0) || 0) / monthDays : 0;
+
+      setTodayVsYesterday({
+        totalValue: todayTotal,
+        percentageChange: yesterdayTotal ? ((todayTotal - yesterdayTotal) / yesterdayTotal) * 100 : 0
+      });
+
+      setTodayVsMonthAvg({
+        totalValue: todayTotal,
+        percentageChange: monthAverage ? ((todayTotal - monthAverage) / monthAverage) * 100 : 0
+      });
+
+    } catch (error) {
+      console.error('Error fetching summary data:', error);
+    }
+  };
+
   useEffect(() => {
     fetchCustomers();
+    fetchSummaryData();
   }, []);
 
   const handleSubmit = async () => {
@@ -86,15 +149,44 @@ export default function Home() {
     </Link>
   );
 
+  const ComparisonWidget = ({ title, data }: { title: string, data: SummaryData }) => (
+    <View style={[
+      styles.widget,
+      { backgroundColor: data.percentageChange >= 0 ? '#e7f5e9' : '#ffebee' }
+    ]}>
+      <Text style={styles.widgetTitle}>{title}</Text>
+      <Text style={styles.widgetValue}>Rp {data.totalValue.toLocaleString()}</Text>
+      <View style={styles.percentageContainer}>
+        <Ionicons 
+          name={data.percentageChange >= 0 ? 'arrow-up' : 'arrow-down'} 
+          size={16} 
+          color={data.percentageChange >= 0 ? '#2e7d32' : '#c62828'} 
+        />
+        <Text style={[
+          styles.percentageText,
+          { color: data.percentageChange >= 0 ? '#2e7d32' : '#c62828' }
+        ]}>
+          {Math.abs(data.percentageChange).toFixed(1)}%
+        </Text>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
+      <View style={styles.widgetContainer}>
+        <ComparisonWidget title="vs Yesterday" data={todayVsYesterday} />
+        <ComparisonWidget title="vs Month Avg" data={todayVsMonthAvg} />
+      </View>
+
       {loading ? (
         <Text>Loading...</Text>
       ) : (
         <FlatList
           data={customers}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()} // Ensure each item has a unique key
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContainer}
         />
       )}
 
@@ -259,5 +351,46 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  widgetContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    gap: 16,
+    marginBottom: 16,
+  },
+  widget: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  widgetTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#424242',
+    marginBottom: 4,
+  },
+  widgetValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  percentageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  percentageText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  listContainer: {
+    paddingHorizontal: 16,
   },
 });
