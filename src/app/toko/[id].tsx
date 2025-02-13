@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, TextInput, Image } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, ScrollView, Platform, View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, TextInput, Image } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { supabase } from '@/utils/supabase';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,7 +33,18 @@ export default function Toko() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [orderItems, setOrderItems] = useState<{ [key: number]: OrderItem }>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
+
+  const headerHeight = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [120, 0],
+    extrapolate: 'clamp'
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,6 +66,10 @@ export default function Toko() {
 
         if (productsError) throw productsError;
         setProducts(productsData || []);
+
+        // Extract unique categories
+        const uniqueCategories = [...new Set(productsData?.map(p => p.category) || [])];
+        setCategories(uniqueCategories);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -64,6 +79,25 @@ export default function Toko() {
 
     fetchData();
   }, [id]);
+
+  // Filter products based on search and category
+  useEffect(() => {
+    let filtered = products;
+    
+    if (searchQuery) {
+      filtered = filtered.filter(product => 
+        product.productName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    if (selectedCategory) {
+      filtered = filtered.filter(product => 
+        product.category === selectedCategory
+      );
+    }
+    
+    setFilteredProducts(filtered);
+  }, [searchQuery, selectedCategory, products]);
 
   const handleQuantityChange = (productId: number, quantity: string, pricePerUnit: number, unit: 'pcs' | 'ctn' | 'mid') => {
     setOrderItems(prev => ({
@@ -129,6 +163,57 @@ export default function Toko() {
     }
   };
 
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search products..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryList}
+      >
+        <TouchableOpacity
+          style={[
+            styles.categoryButton,
+            !selectedCategory && styles.categoryButtonActive
+          ]}
+          onPress={() => setSelectedCategory(null)}
+        >
+          <Text style={[
+            styles.categoryText,
+            !selectedCategory && styles.categoryTextActive
+          ]}>
+            All
+          </Text>
+        </TouchableOpacity>
+        {categories.map((category) => (
+          <TouchableOpacity
+            key={category}
+            style={[
+              styles.categoryButton,
+              selectedCategory === category && styles.categoryButtonActive
+            ]}
+            onPress={() => setSelectedCategory(category)}
+          >
+            <Text style={[
+              styles.categoryText,
+              selectedCategory === category && styles.categoryTextActive
+            ]}>
+              {category}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+
   const renderProduct = ({ item }: { item: Product }) => (
     <View style={styles.productItem}>
       <View style={styles.productInfo}>
@@ -175,7 +260,7 @@ export default function Toko() {
       <TextInput
         style={styles.quantityInput}
         keyboardType="numeric"
-        placeholder="Qty"
+        placeholder={`(${orderItems[item.id]?.unit || 'ctn'})`}
         value={orderItems[item.id]?.quantity || ''}
         onChangeText={(text) => handleQuantityChange(
           item.id,
@@ -198,7 +283,7 @@ export default function Toko() {
             <TouchableOpacity>
               <View style={styles.headerContainer}>
                 <Text style={styles.headerTitle}>{toko.namaToko}</Text>
-                <Ionicons name="chevron-down" size={20} color="#000" />
+                {/* <Ionicons name="chevron-down" size={20} color="#000" /> */}
               </View>
             </TouchableOpacity>
           ),
@@ -206,8 +291,9 @@ export default function Toko() {
         }} 
       />
       <View style={styles.container}>
+        {renderHeader()}
         <FlatList
-          data={products}
+          data={filteredProducts}
           renderItem={renderProduct}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.productList}
@@ -232,13 +318,50 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   headerContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    // paddingTop: Platform.OS === 'ios' ? 8 : 16,
+    // paddingBottom: 8,
+    // borderBottomWidth: 1,
+    // borderBottomColor: '#eee',
+    zIndex: 1,
+  },
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 12,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    fontSize: 16,
+  },
+  categoryList: {
+    marginBottom: 8,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+    marginRight: 8,
+  },
+  categoryButtonActive: {
+    backgroundColor: '#2196F3',
+  },
+  categoryText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  categoryTextActive: {
+    color: '#fff',
+    fontWeight: '600',
   },
   productList: {
     padding: 16,
