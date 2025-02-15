@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, ScrollView, Platform, View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, TextInput, Image } from 'react-native';
+import { Animated, ScrollView, Platform, View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, TextInput, Image, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { supabase } from '@/utils/supabase';
 import { Ionicons } from '@expo/vector-icons';
+import { FlashList } from "@shopify/flash-list";
 
 // Add this interface near the top of the file
 interface Toko {
@@ -232,7 +233,7 @@ export default function Toko() {
               'ctn'
             )}
           >
-            <Text style={styles.productPrice}>Carton: Rp {item.pricePerCarton}</Text>
+            <Text style={styles.productPrice}>CTN: Rp {item.pricePerCarton}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.priceButton}
@@ -242,7 +243,7 @@ export default function Toko() {
               'mid'
             )}
           >
-            <Text style={styles.productPrice}>Middle: Rp {item.pricePerMiddle}</Text>
+            <Text style={styles.productPrice}>MID: Rp {item.pricePerMiddle}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.priceButton}
@@ -252,7 +253,7 @@ export default function Toko() {
               'pcs'
             )}
           >
-            <Text style={styles.productPrice}>Pcs: Rp {item.pricePerPcs}</Text>
+            <Text style={styles.productPrice}>PCS: Rp {item.pricePerPcs}</Text>
           </TouchableOpacity>
           </View>
         </View>
@@ -272,7 +273,7 @@ export default function Toko() {
     </View>
   );
 
-  if (loading) return <Text>Loading...</Text>;
+  if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
   if (!toko) return <Text>Toko not found</Text>;
 
   return (
@@ -292,9 +293,10 @@ export default function Toko() {
       />
       <View style={styles.container}>
         {renderHeader()}
-        <FlatList
+        <FlashList
           data={filteredProducts}
           renderItem={renderProduct}
+          estimatedItemSize={200}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.productList}
         />

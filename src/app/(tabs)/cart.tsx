@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, But
 import { supabase } from '@/utils/supabase';
 import { useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { ActivityIndicator } from 'react-native';
 
 interface OrderSummary {
   customerId: string;
@@ -111,7 +112,7 @@ export default function Cart() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, StatusBar, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Pressable, StatusBar, Modal, TextInput, Alert, Touchable, ActivityIndicator } from 'react-native';
 import { supabase } from '@/utils/supabase'; // Adjust the import path
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -139,13 +139,13 @@ export default function Home() {
   // Render each item in the FlatList
   const renderItem = ({ item }) => (
     <Link href={`/toko/${item.id}`} asChild>
-      <TouchableOpacity>
+      <Pressable>
         <View style={styles.item}>
           <StatusBar barStyle='dark-content' />
           <Text style={styles.title}>{item.namaToko}</Text>
           <Text style={styles.subtitle}>{item.alamat}</Text>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     </Link>
   );
 
@@ -180,7 +180,7 @@ export default function Home() {
       </View>
 
       {loading ? (
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <FlatList
           data={customers}
