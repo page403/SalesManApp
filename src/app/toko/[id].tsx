@@ -273,7 +273,7 @@ export default function Toko() {
     </View>
   );
 
-  if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
+  if (loading) return <ActivityIndicator style={{alignSelf: 'center', flex:1}} size="large" color="#0000ff" />;
   if (!toko) return <Text>Toko not found</Text>;
 
   return (

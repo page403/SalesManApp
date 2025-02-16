@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert, Animated } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Alert, Animated, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { supabase } from '@/utils/supabase';
 import { Swipeable, TouchableOpacity } from 'react-native-gesture-handler';
@@ -154,7 +154,7 @@ export default function OrderDetail() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text>Loading...</Text>
+        <ActivityIndicator style={{alignSelf: 'center', flex:1}} size="large" color="#0000ff" />
       </View>
     );
   }

@@ -112,7 +112,7 @@ export default function Cart() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator style={{alignSelf: 'center', flex:1}} size="large" color="#0000ff" />
       </View>
     );
   }

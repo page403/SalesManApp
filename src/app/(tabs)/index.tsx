@@ -180,7 +180,7 @@ export default function Home() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator style={{alignSelf: 'center', flex:1}} size="large" color="#0000ff" />
       ) : (
         <FlatList
           data={customers}
