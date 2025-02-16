@@ -2,7 +2,7 @@
 
 A mobile application built with Expo and React Native that helps salespeople manage customer orders efficiently.
 
-![App Preview](https://i.imgur.com/example.png) <!-- Replace with actual app screenshots -->
+![App Preview](https://raw.githubusercontent.com/page403/SalesManApp/refs/heads/main/screenshots/salesmanApp-prev.jpg) <!-- Replace with actual app screenshots -->
 
 ## Features
 
