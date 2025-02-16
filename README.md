@@ -1,50 +1,116 @@
-# Welcome to your Expo app 👋
+# Salesman Order Taking App 📱
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile application built with Expo and React Native that helps salespeople manage customer orders efficiently.
 
-## Get started
+![App Preview](https://i.imgur.com/example.png) <!-- Replace with actual app screenshots -->
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+### 🏪 Customer Management
+- View list of customers/stores
+- Add new customers with details
+- Track customer locations and schedules
 
-2. Start the app
+### 📝 Order Management
+- Create new orders with multiple products
+- Select quantity and unit type (pieces, carton, middle)
+- Real-time price calculation
+- Swipe to delete orders
 
-   ```bash
-    npx expo start
-   ```
+### 📊 Sales Analytics
+- Daily sales comparison
+- Monthly average comparison
+- Order history tracking
+- Total sales calculation
 
-In the output, you'll find options to open the app in a
+### 👤 User Authentication
+- Secure login system
+- User registration with admin approval
+- Role-based access control
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## App Preview
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+<!-- Add actual screenshots of your app here -->
+| Home Screen | Order Screen | Cart Screen |
+|------------|--------------|-------------|
+| ![Home](https://i.imgur.com/example1.png) | ![Order](https://i.imgur.com/example2.png) | ![Cart](https://i.imgur.com/example3.png) |
 
-## Get a fresh project
+## Technology Stack
 
-When you're ready, run:
+- **Frontend**: React Native with Expo
+- **State Management**: React Context
+- **Database**: Supabase
+- **UI Components**: Native components with custom styling
+- **Navigation**: Expo Router
+- **Authentication**: Custom auth with Supabase
 
+## Getting Started
+
+1. Install dependencies:
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Start the development server:
+```bash
+npx expo start
+```
 
-## Learn more
+3. Run on your preferred platform:
+- Press `a` for Android
+- Press `i` for iOS
+- Press `w` for web
 
-To learn more about developing your project with Expo, look at the following resources:
+## Project Structure
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+src/
+├── app/                 # Main application screens
+│   ├── (tabs)/         # Tab-based navigation screens
+│   ├── toko/           # Store/customer related screens
+│   └── order-detail/   # Order management screens
+├── components/         # Reusable UI components
+├── context/           # Application context (Auth, etc.)
+└── utils/            # Utility functions and configs
+```
 
-## Join the community
+## Contributing
 
-Join our community of developers creating universal apps.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## Screenshots Description
+
+### Home Screen
+- Customer list with search functionality
+- Quick access to daily statistics
+- Add new customer button
+- Category filtering
+
+### Order Screen
+- Product catalog with images
+- Price selection (PCS/CTN/MID)
+- Quantity input
+- Real-time total calculation
+
+### Cart Screen
+- Daily order summary
+- Customer-wise order grouping
+- Total sales calculation
+- Date selection for historical data
+
+---
+
+For more information about the frameworks and libraries used:
+- [Expo Documentation](https://docs.expo.dev/)
+- [React Native](https://reactnative.dev/)
+- [Supabase](https://supabase.com/)
