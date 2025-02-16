@@ -28,13 +28,6 @@ A mobile application built with Expo and React Native that helps salespeople man
 - User registration with admin approval
 - Role-based access control
 
-## App Preview
-
-<!-- Add actual screenshots of your app here -->
-| Home Screen | Order Screen | Cart Screen |
-|------------|--------------|-------------|
-| ![Home](https://i.imgur.com/example1.png) | ![Order](https://i.imgur.com/example2.png) | ![Cart](https://i.imgur.com/example3.png) |
-
 ## Technology Stack
 
 - **Frontend**: React Native with Expo
