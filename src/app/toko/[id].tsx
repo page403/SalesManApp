@@ -3,7 +3,6 @@ import { Animated, ScrollView, Platform, View, Text, StyleSheet, TouchableOpacit
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { supabase } from '@/utils/supabase';
 import { Ionicons } from '@expo/vector-icons';
-import { FlashList } from "@shopify/flash-list";
 
 // Add this interface near the top of the file
 interface Toko {
@@ -105,7 +104,7 @@ export default function Toko() {
       ...prev,
       [productId]: {
         productId,
-        quantity,
+        quantity: quantity || '',
         pricePerUnit,
         unit
       }
@@ -225,44 +224,56 @@ export default function Toko() {
             style={styles.productImage}
           />
           <View>
-          <TouchableOpacity 
-            style={styles.priceButton}
-            onPress={() => handleQuantityChange(item.id, 
-              orderItems[item.id]?.quantity || '', 
-              item.pricePerCarton,
-              'ctn'
-            )}
-          >
-            <Text style={styles.productPrice}>CTN: Rp {item.pricePerCarton}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.priceButton}
-            onPress={() => handleQuantityChange(item.id, 
-              orderItems[item.id]?.quantity || '', 
-              item.pricePerMiddle,
-              'mid'
-            )}
-          >
-            <Text style={styles.productPrice}>MID: Rp {item.pricePerMiddle}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.priceButton}
-            onPress={() => handleQuantityChange(item.id, 
-              orderItems[item.id]?.quantity || '', 
-              item.pricePerPcs,
-              'pcs'
-            )}
-          >
-            <Text style={styles.productPrice}>PCS: Rp {item.pricePerPcs}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={[
+                styles.priceButton,
+                orderItems[item.id]?.unit === 'ctn' && styles.selectedPriceButton
+              ]}
+              onPress={() => handleQuantityChange(
+                item.id, 
+                orderItems[item.id]?.quantity || '',
+                item.pricePerCarton,
+                'ctn'
+              )}
+            >
+              <Text style={styles.productPrice}>CTN: Rp {item.pricePerCarton}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[
+                styles.priceButton,
+                orderItems[item.id]?.unit === 'mid' && styles.selectedPriceButton
+              ]}
+              onPress={() => handleQuantityChange(
+                item.id, 
+                orderItems[item.id]?.quantity || '',
+                item.pricePerMiddle,
+                'mid'
+              )}
+            >
+              <Text style={styles.productPrice}>MID: Rp {item.pricePerMiddle}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[
+                styles.priceButton,
+                orderItems[item.id]?.unit === 'pcs' && styles.selectedPriceButton
+              ]}
+              onPress={() => handleQuantityChange(
+                item.id, 
+                orderItems[item.id]?.quantity || '',
+                item.pricePerPcs,
+                'pcs'
+              )}
+            >
+              <Text style={styles.productPrice}>PCS: Rp {item.pricePerPcs}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
       <TextInput
         style={styles.quantityInput}
         keyboardType="numeric"
-        placeholder={`(${orderItems[item.id]?.unit || 'ctn'})`}
-        value={orderItems[item.id]?.quantity || ''}
+        placeholder={`${orderItems[item.id]?.unit || 'ctn'}`}
+        value={orderItems[item.id]?.quantity}
         onChangeText={(text) => handleQuantityChange(
           item.id,
           text,
@@ -283,7 +294,7 @@ export default function Toko() {
           headerTitle: () => (
             <TouchableOpacity>
               <View style={styles.headerContainer}>
-                <Text style={styles.headerTitle}>{toko.namaToko}</Text>
+                <Text>{toko.namaToko}</Text>
                 {/* <Ionicons name="chevron-down" size={20} color="#000" /> */}
               </View>
             </TouchableOpacity>
@@ -293,10 +304,10 @@ export default function Toko() {
       />
       <View style={styles.container}>
         {renderHeader()}
-        <FlashList
+        <FlatList
           data={filteredProducts}
           renderItem={renderProduct}
-          estimatedItemSize={200}
+          // estimatedItemSize={200}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.productList}
         />
@@ -322,10 +333,10 @@ const styles = StyleSheet.create({
   headerContainer: {
     backgroundColor: '#fff',
     paddingHorizontal: 16,
-    // paddingTop: Platform.OS === 'ios' ? 8 : 16,
-    // paddingBottom: 8,
-    // borderBottomWidth: 1,
-    // borderBottomColor: '#eee',
+    paddingTop: Platform.OS === 'ios' ? 8 : 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
     zIndex: 1,
   },
   searchContainer: {
@@ -352,7 +363,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#f5f5f5',
-    marginRight: 8,
+    marginRight: 8
   },
   categoryButtonActive: {
     backgroundColor: '#2196F3',
@@ -400,7 +411,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   priceButton: {
-    paddingVertical: 2,
+    paddingVertical: 4,
+    marginVertical: 2,
   },
   quantityInput: {
     borderWidth: 1,
@@ -439,6 +451,10 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     marginRight: 10,
+    borderRadius: 4,
+  },
+  selectedPriceButton: {
+    backgroundColor: '#e3f2fd',
     borderRadius: 4,
   },
 }); 
