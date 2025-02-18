@@ -165,6 +165,10 @@ export default function Toko() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
+      <View style={{flexDirection: 'row', alignItems: 'center', gap: 10, height: 40}}>
+        <Ionicons name='arrow-back' size={20} color="#000" onPress={() => router.back()} />
+        <Text style={{fontSize: 16, fontWeight: 'bold'}}>{toko?.namaToko}</Text>
+      </View>
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
@@ -295,7 +299,7 @@ export default function Toko() {
             <TouchableOpacity>
               <View style={styles.headerContainer}>
                 <Text>{toko.namaToko}</Text>
-                {/* <Ionicons name="chevron-down" size={20} color="#000" /> */}
+                <Ionicons name="chevron-down" size={20} color="#000" />
               </View>
             </TouchableOpacity>
           ),
@@ -333,7 +337,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     backgroundColor: '#fff',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 8 : 16,
+    // paddingTop: Platform.OS === 'ios' ? 8 : 16,
     paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',

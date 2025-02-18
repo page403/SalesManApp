@@ -9,7 +9,29 @@ interface SummaryData {
   percentageChange: number;
 }
 
+interface Customer {
+  id: string;
+  namaToko: string;
+  alamat: string;
+  limitCredit: string;
+  jadwal: string;
+  minggu: 'ganjil' | 'genap';
+}
+
 export default function Home() {
+  const getDayInIndonesian = () => {
+    const days = {
+      0: 'Minggu',
+      1: 'Senin',
+      2: 'Selasa',
+      3: 'Rabu',
+      4: 'Kamis',
+      5: 'Jumat',
+      6: 'Sabtu'
+    };
+    return days[new Date().getDay()];
+  };
+
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -17,16 +39,32 @@ export default function Home() {
     namaToko: '',
     alamat: '',
     limitCredit: '2500000',
-    jadwal: 'Senin'
+    jadwal: getDayInIndonesian(),
+    minggu: 'ganjil'
   });
   const [todayVsYesterday, setTodayVsYesterday] = useState<SummaryData>({ totalValue: 0, percentageChange: 0 });
   const [todayVsMonthAvg, setTodayVsMonthAvg] = useState<SummaryData>({ totalValue: 0, percentageChange: 0 });
+  const [searchText, setSearchText] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const getWeekType = () => {
+    const currentDate = new Date();
+    const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
+    const weekNumber = Math.ceil((((currentDate.getTime() - startOfYear.getTime()) / 86400000) + startOfYear.getDay() + 1) / 7);
+    return weekNumber % 2 === 0 ? 'genap' : 'ganjil';
+  };
 
   const fetchCustomers = async () => {
     try {
+      const currentDay = getDayInIndonesian();
+      const weekType = getWeekType();
+
       const { data, error } = await supabase
         .from('customer')
-        .select('*');
+        .select('*')
+        .eq('jadwal', currentDay)
+        .eq('minggu', weekType);
 
       if (error) throw error;
       setCustomers(data || []);
@@ -92,6 +130,27 @@ export default function Home() {
     }
   };
 
+  const searchCustomers = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase
+        .from('customer')
+        .select('*')
+        .ilike('namaToko', `%${query}%`);
+
+      if (error) throw error;
+      setSearchResults(data || []);
+    } catch (error) {
+      console.error('Error searching customers:', error);
+    }
+  };
+
   useEffect(() => {
     fetchCustomers();
     fetchSummaryData();
@@ -111,7 +170,8 @@ export default function Home() {
             namaToko: newCustomer.namaToko,
             alamat: newCustomer.alamat,
             limitCredit: parseInt(newCustomer.limitCredit),
-            jadwal: newCustomer.jadwal
+            jadwal: newCustomer.jadwal,
+            minggu: 'ganjil' // or 'genap' based on user selection
           }
         ])
         .select();
@@ -120,16 +180,15 @@ export default function Home() {
 
       Alert.alert('Success', 'Customer added successfully');
       setModalVisible(false);
-      // Reset form
       setNewCustomer({
         namaToko: '',
         alamat: '',
         limitCredit: '2500000',
-        jadwal: 'Senin'
+        jadwal: getDayInIndonesian(),
+        minggu: 'ganjil'
       });
       
-      // Refresh your customer list here if needed
-      fetchCustomers(); // Assuming you have this function to refresh the list
+      fetchCustomers();
     } catch (error) {
       console.error('Error adding customer:', error);
       Alert.alert('Error', 'Failed to add customer');
@@ -172,19 +231,63 @@ export default function Home() {
     </View>
   );
 
-  return (
-    <View style={styles.container}>
+  const DaySelector = () => (
+    <View style={styles.daySelector}>
+      {['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'].map((day) => (
+        <TouchableOpacity
+          key={day}
+          style={[
+            styles.dayButton,
+            newCustomer.jadwal === day && styles.selectedDayButton
+          ]}
+          onPress={() => setNewCustomer(prev => ({ ...prev, jadwal: day }))}
+        >
+          <Text style={[
+            styles.dayButtonText,
+            newCustomer.jadwal === day && styles.selectedDayButtonText
+          ]}>
+            {day}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderHeader = () => (
+    <>
+      <Text style={styles.dayHeader}>
+        {isSearching ? 'Search Results' : getDayInIndonesian()}
+      </Text>
       <View style={styles.widgetContainer}>
         <ComparisonWidget title="vs Yesterday" data={todayVsYesterday} />
         <ComparisonWidget title="vs Month Avg" data={todayVsMonthAvg} />
+      </View>
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.searchBarSticky}>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search customer..."
+            value={searchText}
+            onChangeText={(text) => {
+              setSearchText(text);
+              searchCustomers(text);
+            }}
+          />
+        </View>
       </View>
 
       {loading ? (
         <ActivityIndicator style={{alignSelf: 'center', flex:1}} size="large" color="#0000ff" />
       ) : (
         <FlatList
-          data={customers}
+          data={isSearching ? searchResults : customers}
           renderItem={renderItem}
+          ListHeaderComponent={renderHeader}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.listContainer}
         />
@@ -232,12 +335,38 @@ export default function Home() {
               keyboardType="numeric"
             />
 
-            <TextInput
+            {/* <TextInput
               style={styles.input}
               placeholder="Jadwal"
               value={newCustomer.jadwal}
               onChangeText={(text) => setNewCustomer(prev => ({ ...prev, jadwal: text }))}
-            />
+            /> */}
+
+            <DaySelector />
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Minggu</Text>
+              <View style={styles.radioGroup}>
+                <TouchableOpacity
+                  style={[
+                    styles.radioButton,
+                    newCustomer.minggu === 'ganjil' && styles.radioButtonSelected
+                  ]}
+                  onPress={() => setNewCustomer(prev => ({ ...prev, minggu: 'ganjil' }))}
+                >
+                  <Text>Ganjil (Pati)</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.radioButton,
+                    newCustomer.minggu === 'genap' && styles.radioButtonSelected
+                  ]}
+                  onPress={() => setNewCustomer(prev => ({ ...prev, minggu: 'genap' }))}
+                >
+                  <Text>Genap (Rembang)</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
@@ -264,8 +393,28 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: '#f5f5f5',
+  },
+  searchBarSticky: {
+    backgroundColor: 'transparent',
+    paddingTop: 8,
+    paddingBottom: 8,
+    // borderBottomWidth: 1,
+    // borderBottomColor: '#ddd',
+  },
+  searchContainer: {
+    paddingHorizontal: 16,
+  },
+  searchInput: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    fontSize: 16,
+  },
+  listContainer: {
+    paddingHorizontal: 16,
   },
   item: {
     backgroundColor: '#fff',
@@ -354,9 +503,7 @@ const styles = StyleSheet.create({
   },
   widgetContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingVertical: 16,
     gap: 16,
     marginBottom: 16,
   },
@@ -390,7 +537,59 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 4,
   },
-  listContainer: {
-    paddingHorizontal: 16,
+  inputGroup: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#333',
+  },
+  radioGroup: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  radioButton: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    flex: 1,
+    alignItems: 'center',
+  },
+  radioButtonSelected: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#2196F3',
+  },
+  daySelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 15,
+  },
+  dayButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  selectedDayButton: {
+    backgroundColor: '#2196F3',
+    borderColor: '#2196F3',
+  },
+  dayButtonText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  selectedDayButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  dayHeader: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
 });

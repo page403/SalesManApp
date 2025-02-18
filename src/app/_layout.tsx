@@ -9,7 +9,7 @@ function RootLayoutNav() {
   const { user } = useAuth();
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: true }}>
       {!user ? (
         <>
           <Stack.Screen name="login" />

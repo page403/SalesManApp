@@ -120,9 +120,11 @@ export default function Cart() {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>
-          Orders for {selectedDate.toLocaleDateString()}
-        </Text>
+        <View>
+          <Text style={styles.header}>
+            Orders for {selectedDate.toLocaleDateString()}
+          </Text> 
+        </View>
         <TouchableOpacity
           style={styles.dateButton}
           onPress={() => setShowDatePicker(true)}
@@ -156,6 +158,9 @@ export default function Cart() {
       />
 
       <View style={styles.totalContainer}>
+      <Text style={styles.subHeader}>
+            EC: {orderSummaries.length}
+          </Text>
         <Text style={styles.totalText}>
           Total Value: Rp {totalDayValue.toLocaleString()}
         </Text>
@@ -172,12 +177,19 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: 16,
+    backgroundColor: '#fff',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#e0e0e0',
   },
   header: {
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  subHeader: {
+    fontSize: 14,
+    color: '#666',
   },
   dateButton: {
     backgroundColor: '#2196F3',
@@ -224,6 +236,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   totalText: {
     fontSize: 18,
