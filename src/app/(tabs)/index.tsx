@@ -3,7 +3,7 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Pressable, StatusBa
 import { supabase } from '@/utils/supabase'; // Adjust the import path
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, useAnimatedKeyboard } from 'react-native-reanimated';
 
 const { height } = Dimensions.get('window');
 interface SummaryData {
@@ -34,13 +34,8 @@ export default function Home() {
     return days[new Date().getDay() as keyof typeof days];
   };
 
-  const sharedValue = useSharedValue(0);
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: withTiming(sharedValue.value, { duration: 300, easing: Easing.bezier(0.25, 0.1, 0.25, 1.0) }) }],
-    };
-  });
-
+  
+  
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -292,8 +287,8 @@ export default function Home() {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       style={styles.container}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <View style={styles.searchBarSticky}>
         <View style={styles.searchContainer}>
@@ -324,14 +319,14 @@ export default function Home() {
       )}
 
       {/* Modal */}
-      {/* <Modal
+      <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
-      > */}
+      >
         
-          <Animated.View style={[styles.modalContent, animatedStyle]}>
+          <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add New Customer</Text>
             
             <TextInput
@@ -395,7 +390,7 @@ export default function Home() {
                 style={[styles.button, styles.cancelButton]}
                 onPress={() => {
                   setModalVisible(false);
-                  sharedValue.value = height * .9;
+                  
                 }}
               >
                 <Text style={styles.buttonText}>Cancel</Text>
@@ -408,9 +403,9 @@ export default function Home() {
                 <Text style={styles.buttonText}>Submit</Text>
               </TouchableOpacity>
             </View>
-          </Animated.View>
+          </View>
         
-      {/* </Modal> */}
+      </Modal>
 
       {/* Floating Action Button */}
       {modalVisible ? null : 
@@ -419,7 +414,7 @@ export default function Home() {
         style={styles.fab}
       onPress={() => {
         setModalVisible(true);
-        sharedValue.value = -height * .9;
+
       }}
     >
       <Ionicons name="add" size={24} color="white" />
@@ -432,7 +427,7 @@ export default function Home() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    height: '100%',
     backgroundColor: '#fff',
   },
   searchBarSticky: {
@@ -499,17 +494,16 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     // transform: [{ translateY: -height}],
-    position: 'absolute',
-    bottom: -height,
+    // position: 'absolute',
     alignSelf: 'center',
+    bottom: 0,
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 40,
     // width: '90%',
     maxWidth: 500,
-    // maxHeight: '100%',
-    height: height,
-    elevation: 10,
+    maxHeight: '80%',
+   
   },
   modalTitle: {
     fontSize: 20,
