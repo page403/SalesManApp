@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: 16,
     backgroundColor: '#fff',
-    borderWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: '#e0e0e0',
   },
   header: {

@@ -3,6 +3,7 @@ import { Animated, ScrollView, Platform, View, Text, StyleSheet, TouchableOpacit
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { supabase } from '@/utils/supabase';
 import { Ionicons } from '@expo/vector-icons';
+import { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 
 // Add this interface near the top of the file
 interface Toko {
@@ -163,6 +164,13 @@ export default function Toko() {
     }
   };
 
+  const keyboard = useAnimatedKeyboard();
+  const translateStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: -keyboard.height.value }],
+    };
+  });
+
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       <View style={{flexDirection: 'row', alignItems: 'center', gap: 10, height: 40}}>
@@ -306,7 +314,7 @@ export default function Toko() {
           headerShown: true,
         }} 
       />
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, translateStyle]}>
         {renderHeader()}
         <FlatList
           data={filteredProducts}
@@ -324,7 +332,7 @@ export default function Toko() {
             <Text style={styles.submitButtonText}>Place Order</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
     </>
   );
 }

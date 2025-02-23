@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Pressable, StatusBar, Modal, TextInput, Alert, Touchable, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Pressable, StatusBar, Modal, TextInput, Alert, Touchable, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { supabase } from '@/utils/supabase'; // Adjust the import path
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,10 +29,10 @@ export default function Home() {
       5: 'Jumat',
       6: 'Sabtu'
     };
-    return days[new Date().getDay()];
+    return days[new Date().getDay() as keyof typeof days];
   };
 
-  const [customers, setCustomers] = useState([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
@@ -45,14 +45,25 @@ export default function Home() {
   const [todayVsYesterday, setTodayVsYesterday] = useState<SummaryData>({ totalValue: 0, percentageChange: 0 });
   const [todayVsMonthAvg, setTodayVsMonthAvg] = useState<SummaryData>({ totalValue: 0, percentageChange: 0 });
   const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<Customer[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   const getWeekType = () => {
-    const currentDate = new Date();
-    const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
-    const weekNumber = Math.ceil((((currentDate.getTime() - startOfYear.getTime()) / 86400000) + startOfYear.getDay() + 1) / 7);
-    return weekNumber % 2 === 0 ? 'genap' : 'ganjil';
+    // const currentDate = new Date();
+    // const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
+    // const weekNumber = Math.ceil((((currentDate.getTime() - startOfYear.getTime()) / 86400000) + startOfYear.getDay() + 1) / 7);
+    // return weekNumber % 2 === 0 ? 'genap' : 'ganjil';
+    // Define the start date (Monday, February 24, 2025) which is "ganjil"
+    const startDate = new Date('2025-02-24T00:00:00Z');
+    
+    // Calculate the difference in milliseconds between the given date and the start date
+    const diffInMs = new Date().getTime() - startDate.getTime();
+    
+    // Convert the difference to weeks
+    const weekNumber = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 7));
+    
+    // If the number of weeks is even, it's "genap", otherwise "ganjil"
+    return weekNumber % 2 === 0 ? 'ganjil' : 'genap';
   };
 
   const fetchCustomers = async () => {
@@ -171,7 +182,7 @@ export default function Home() {
             alamat: newCustomer.alamat,
             limitCredit: parseInt(newCustomer.limitCredit),
             jadwal: newCustomer.jadwal,
-            minggu: 'ganjil' // or 'genap' based on user selection
+            minggu: newCustomer.minggu // Use the selected minggu value
           }
         ])
         .select();
@@ -196,7 +207,7 @@ export default function Home() {
   };
 
   // Render each item in the FlatList
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: { item: Customer }) => (
     <Link href={`/toko/${item.id}`} asChild>
       <Pressable>
         <View style={styles.item}>
@@ -255,9 +266,13 @@ export default function Home() {
 
   const renderHeader = () => (
     <>
-      <Text style={styles.dayHeader}>
+    <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+
+    <Text style={styles.dayHeader}>
         {isSearching ? 'Search Results' : getDayInIndonesian()}
       </Text>
+      <Text style={{fontSize: 16, fontWeight: 'bold', marginLeft: 10}}> {getWeekType().toLocaleUpperCase()}</Text>
+    </View>
       <View style={styles.widgetContainer}>
         <ComparisonWidget title="vs Yesterday" data={todayVsYesterday} />
         <ComparisonWidget title="vs Month Avg" data={todayVsMonthAvg} />
@@ -266,7 +281,11 @@ export default function Home() {
   );
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+    >
       <View style={styles.searchBarSticky}>
         <View style={styles.searchContainer}>
           <TextInput
@@ -290,16 +309,10 @@ export default function Home() {
           ListHeaderComponent={renderHeader}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.listContainer}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         />
       )}
-
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setModalVisible(true)}
-      >
-        <Ionicons name="add" size={24} color="white" />
-      </TouchableOpacity>
 
       {/* Modal */}
       <Modal
@@ -308,7 +321,10 @@ export default function Home() {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add New Customer</Text>
             
@@ -384,21 +400,28 @@ export default function Home() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
-    </View>
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setModalVisible(true)}
+      >
+        <Ionicons name="add" size={24} color="white" />
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   searchBarSticky: {
     backgroundColor: 'transparent',
     paddingTop: 8,
-    paddingBottom: 8,
     // borderBottomWidth: 1,
     // borderBottomColor: '#ddd',
   },
@@ -414,6 +437,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   listContainer: {
+    marginTop: 16,  
     paddingHorizontal: 16,
   },
   item: {
@@ -463,6 +487,7 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '90%',
     maxWidth: 500,
+    maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 20,
